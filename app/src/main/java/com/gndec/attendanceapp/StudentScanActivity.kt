@@ -82,34 +82,43 @@ class StudentScanActivity : AppCompatActivity() {
         val studentUid = currentUser.uid
         val rollNumber = currentUser.email?.substringBefore("@") ?: "unknown"
 
-        db.collection("sessions").document(sessionId).get()
-            .addOnSuccessListener { sessionDoc ->
-                if (!sessionDoc.exists()) {
-                    Toast.makeText(this, "Session not found", Toast.LENGTH_LONG).show()
-                    finish()
-                    return@addOnSuccessListener
-                }
+        db.collection("users").document(studentUid).get()
+            .addOnSuccessListener { userDoc ->
+                val realName = userDoc.getString("name") ?: rollNumber
 
-                val isActive = sessionDoc.getBoolean("isActive") ?: false
-                val currentToken = sessionDoc.getString("currentQrToken")
-                val subject = sessionDoc.getString("subject") ?: "Unknown"
+                db.collection("sessions").document(sessionId).get()
+                    .addOnSuccessListener { sessionDoc ->
+                        if (!sessionDoc.exists()) {
+                            Toast.makeText(this, "Session not found", Toast.LENGTH_LONG).show()
+                            finish()
+                            return@addOnSuccessListener
+                        }
 
-                if (!isActive) {
-                    Toast.makeText(this, "This session has ended", Toast.LENGTH_LONG).show()
-                    finish()
-                    return@addOnSuccessListener
-                }
+                        val isActive = sessionDoc.getBoolean("isActive") ?: false
+                        val currentToken = sessionDoc.getString("currentQrToken")
+                        val subject = sessionDoc.getString("subject") ?: "Unknown"
 
-                if (currentToken != scannedToken) {
-                    Toast.makeText(this, "QR code expired. Please scan the live QR.", Toast.LENGTH_LONG).show()
-                    finish()
-                    return@addOnSuccessListener
-                }
+                        if (!isActive) {
+                            Toast.makeText(this, "This session has ended", Toast.LENGTH_LONG).show()
+                            finish()
+                            return@addOnSuccessListener
+                        }
 
-                checkDuplicateAndMarkAttendance(sessionId, subject, studentUid, rollNumber, scannedToken)
+                        if (currentToken != scannedToken) {
+                            Toast.makeText(this, "QR code expired. Please scan the live QR.", Toast.LENGTH_LONG).show()
+                            finish()
+                            return@addOnSuccessListener
+                        }
+
+                        checkDuplicateAndMarkAttendance(sessionId, subject, studentUid, rollNumber, realName, scannedToken)
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Error checking session: ${it.message}", Toast.LENGTH_LONG).show()
+                        finish()
+                    }
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Error checking session: ${it.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Error fetching user info: ${it.message}", Toast.LENGTH_LONG).show()
                 finish()
             }
     }
@@ -119,6 +128,7 @@ class StudentScanActivity : AppCompatActivity() {
         subject: String,
         studentUid: String,
         rollNumber: String,
+        studentName: String,
         token: String
     ) {
         db.collection("attendance")
@@ -137,7 +147,7 @@ class StudentScanActivity : AppCompatActivity() {
                     "subject" to subject,
                     "studentUid" to studentUid,
                     "studentRollNumber" to rollNumber,
-                    "studentName" to rollNumber,
+                    "studentName" to studentName,
                     "scannedAt" to Timestamp.now(),
                     "qrTokenUsed" to token
                 )
