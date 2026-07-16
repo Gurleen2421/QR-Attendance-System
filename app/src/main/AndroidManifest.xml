@@ -42,6 +42,9 @@
         <activity
             android:name=".GenerateQrActivity"
             android:exported="false" />
+        <activity
+            android:name=".StudentScanActivity"
+            android:exported="false" />
 
     </application>
 
