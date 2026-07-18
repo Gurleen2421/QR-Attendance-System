@@ -45,26 +45,18 @@ class TeacherDashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        android.util.Log.d("DASHBOARD_DEBUG", "onResume called")
         loadSessions()
     }
 
     private fun loadSessions() {
-        val currentUser = auth.currentUser
-        android.util.Log.d("DASHBOARD_DEBUG", "loadSessions called, currentUser = $currentUser")
-        if (currentUser == null) {
-            android.util.Log.d("DASHBOARD_DEBUG", "currentUser is null, returning early")
-            return
-        }
+        val currentUser = auth.currentUser ?: return
         val teacherId = currentUser.uid
-        android.util.Log.d("DASHBOARD_DEBUG", "teacherId = $teacherId")
 
         db.collection("sessions")
             .whereEqualTo("teacherId", teacherId)
             .orderBy("startedAt", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { querySnapshot ->
-                android.util.Log.d("DASHBOARD_DEBUG", "Query succeeded, doc count = ${querySnapshot.size()}")
                 val container = findViewById<LinearLayout>(R.id.sessionsContainer)
                 container.removeAllViews()
 
@@ -109,11 +101,18 @@ class TeacherDashboardActivity : AppCompatActivity() {
 
                     row.addView(subjectView)
                     row.addView(statusView)
+
+                    row.setOnClickListener {
+                        val intent = Intent(this, SessionAttendanceActivity::class.java)
+                        intent.putExtra("sessionId", doc.id)
+                        intent.putExtra("subject", subject)
+                        startActivity(intent)
+                    }
+
                     container.addView(row)
                 }
             }
             .addOnFailureListener {
-                android.util.Log.e("DASHBOARD_DEBUG", "Query FAILED: ${it.message}", it)
                 val container = findViewById<LinearLayout>(R.id.sessionsContainer)
                 container.removeAllViews()
                 val errorText = TextView(this)

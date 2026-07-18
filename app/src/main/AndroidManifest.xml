@@ -45,6 +45,9 @@
         <activity
             android:name=".StudentScanActivity"
             android:exported="false" />
+        <activity
+            android:name=".SessionAttendanceActivity"
+            android:exported="false" />
 
     </application>
 
