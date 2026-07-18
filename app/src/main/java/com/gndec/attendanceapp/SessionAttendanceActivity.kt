@@ -4,18 +4,21 @@ import android.os.Bundle
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
 class SessionAttendanceActivity : AppCompatActivity() {
 
     private lateinit var db: FirebaseFirestore
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_session_attendance)
 
         db = FirebaseFirestore.getInstance()
+        auth = FirebaseAuth.getInstance()
 
         val sessionId = intent.getStringExtra("sessionId") ?: ""
         val subject = intent.getStringExtra("subject") ?: "Session"
@@ -31,8 +34,15 @@ class SessionAttendanceActivity : AppCompatActivity() {
     }
 
     private fun loadAttendance(sessionId: String) {
+        val teacherId = auth.currentUser?.uid
+        if (teacherId == null) {
+            findViewById<TextView>(R.id.tvCount).text = "Not logged in"
+            return
+        }
+
         db.collection("attendance")
             .whereEqualTo("sessionId", sessionId)
+            .whereEqualTo("teacherId", teacherId)
             .orderBy("scannedAt", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { querySnapshot ->

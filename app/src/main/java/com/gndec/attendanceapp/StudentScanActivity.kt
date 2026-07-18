@@ -97,6 +97,7 @@ class StudentScanActivity : AppCompatActivity() {
                         val isActive = sessionDoc.getBoolean("isActive") ?: false
                         val currentToken = sessionDoc.getString("currentQrToken")
                         val subject = sessionDoc.getString("subject") ?: "Unknown"
+                        val teacherId = sessionDoc.getString("teacherId") ?: ""
 
                         if (!isActive) {
                             Toast.makeText(this, "This session has ended", Toast.LENGTH_LONG).show()
@@ -110,7 +111,7 @@ class StudentScanActivity : AppCompatActivity() {
                             return@addOnSuccessListener
                         }
 
-                        checkDuplicateAndMarkAttendance(sessionId, subject, studentUid, rollNumber, realName, scannedToken)
+                        checkDuplicateAndMarkAttendance(sessionId, subject, teacherId, studentUid, rollNumber, realName, scannedToken)
                     }
                     .addOnFailureListener {
                         Toast.makeText(this, "Error checking session: ${it.message}", Toast.LENGTH_LONG).show()
@@ -126,6 +127,7 @@ class StudentScanActivity : AppCompatActivity() {
     private fun checkDuplicateAndMarkAttendance(
         sessionId: String,
         subject: String,
+        teacherId: String,
         studentUid: String,
         rollNumber: String,
         studentName: String,
@@ -145,6 +147,7 @@ class StudentScanActivity : AppCompatActivity() {
                 val attendanceData = hashMapOf(
                     "sessionId" to sessionId,
                     "subject" to subject,
+                    "teacherId" to teacherId,
                     "studentUid" to studentUid,
                     "studentRollNumber" to rollNumber,
                     "studentName" to studentName,
